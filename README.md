@@ -4,6 +4,8 @@ It sets `vim.ui.select` to telescope. That means for example that neovim core
 stuff can fill the telescope picker. Example would be
 `lua vim.lsp.buf.code_action()`.
 
+![screenshot](https://user-images.githubusercontent.com/66286082/154263222-ccecd75a-9b4b-410f-9843-1f300638aecf.png)
+
 requires latest nvim 0.6 (nightly)
 
 ## Installation
@@ -30,7 +32,7 @@ require("telescope").setup {
     }
   }
 }
--- To get fzf loaded and working with telescope, you need to call
+-- To get ui-select loaded and working with telescope, you need to call
 -- load_extension, somewhere after setup function:
 require("telescope").load_extension("ui-select")
 ```
