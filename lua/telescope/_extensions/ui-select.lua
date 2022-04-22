@@ -9,15 +9,83 @@ return require("telescope").register_extension {
     local conf = require("telescope.config").values
     local actions = require "telescope.actions"
     local action_state = require "telescope.actions.state"
+    local strings = require "plenary.strings"
+    local entry_display = require "telescope.pickers.entry_display"
+
+    local specific_opts = {
+      ["Code actions:"] = {
+        make_indexed = function(items)
+          local indexed_items = {}
+          local widths = {
+            idx = 0,
+            command_title = 0,
+            client_name = 0,
+          }
+          for idx, item in ipairs(items) do
+            local client = vim.lsp.get_client_by_id(item[1])
+            local entry = {
+              idx = idx,
+              ["add"] = {
+                command_title = item[2].title:gsub("\r\n", "\\r\\n"):gsub("\n", "\\n"),
+                client_name = client and client.name or "",
+              },
+              text = item,
+            }
+            table.insert(indexed_items, entry)
+            widths.idx = math.max(widths.idx, strings.strdisplaywidth(entry.idx))
+            widths.command_title = math.max(widths.command_title, strings.strdisplaywidth(entry.add.command_title))
+            widths.client_name = math.max(widths.client_name, strings.strdisplaywidth(entry.add.client_name))
+          end
+          return indexed_items, widths
+        end,
+        make_displayer = function(widths)
+          return entry_display.create {
+            separator = " ",
+            items = {
+              { width = widths.idx + 1 }, -- +1 for ":" suffix
+              { width = widths.command_title },
+              { width = widths.client_name },
+            },
+          }
+        end,
+        make_display = function(displayer)
+          return function(e)
+            return displayer {
+              { e.value.idx .. ":", "TelescopePromptPrefix" },
+              { e.value.add.command_title },
+              { e.value.add.client_name, "TelescopeResultsComment" },
+            }
+          end
+        end,
+        make_ordinal = function(e)
+          return e.idx .. e.add["command_title"]
+        end,
+      },
+    }
 
     vim.ui.select = function(items, opts, on_choice)
       opts = opts or {}
-      local indexed_items = {}
-      for idx, item in ipairs(items) do
-        table.insert(indexed_items, {index = idx, text = item})
-      end
-      opts.format_item = vim.F.if_nil(opts.format_item, function(e)
-        return e
+
+      local indexed_items, widths = vim.F.if_nil(
+        vim.F.if_nil(specific_opts[opts.prompt], {}).make_displayer,
+        function(items_)
+          local indexed_items = {}
+          for idx, item in ipairs(items_) do
+            table.insert(indexed_items, { idx = idx, text = item })
+          end
+          return indexed_items
+        end
+      )(items)
+      local displayer = vim.F.if_nil(vim.F.if_nil(specific_opts[opts.prompt], {}).make_displayer, function() end)(
+        widths
+      )
+      local make_display = vim.F.if_nil(vim.F.if_nil(specific_opts[opts.prompt], {}).make_display, function(_)
+        return function(e)
+          return opts.format_item(e.value.text)
+        end
+      end)(displayer)
+      local make_ordinal = vim.F.if_nil(vim.F.if_nil(specific_opts[opts.prompt], {}).make_ordinal, function(e)
+        return opts.format_item(e.text)
       end)
       pickers.new(topts, {
         prompt_title = vim.F.if_nil(opts.prompt, "Select one of"),
@@ -26,8 +94,8 @@ return require("telescope").register_extension {
           entry_maker = function(e)
             return {
               value = e,
-              display = opts.format_item(e.text),
-              ordinal = opts.format_item(e.text),
+              display = make_display,
+              ordinal = make_ordinal(e),
             }
           end,
         },
@@ -35,7 +103,7 @@ return require("telescope").register_extension {
           actions.select_default:replace(function()
             local selection = action_state.get_selected_entry().value
             actions.close(prompt_bufnr)
-            on_choice(selection.text, selection.index)
+            on_choice(selection.text, selection.idx)
           end)
           return true
         end,
