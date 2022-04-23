@@ -69,8 +69,11 @@ return require("telescope").register_extension {
       if prompt:sub(-1, -1) == ":" then
         prompt = prompt:sub(1, -2)
       end
-      local sopts = vim.F.if_nil(specific_opts[vim.F.if_nil(opts.kind, "")], {})
+      opts.format_item = vim.F.if_nil(opts.format_item, function(e)
+        return e
+      end)
 
+      local sopts = vim.F.if_nil(specific_opts[vim.F.if_nil(opts.kind, "")], {})
       local indexed_items, widths = vim.F.if_nil(sopts.make_indexed, function(items_)
         local indexed_items = {}
         for idx, item in ipairs(items_) do
