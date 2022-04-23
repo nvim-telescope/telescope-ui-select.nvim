@@ -67,7 +67,7 @@ return require("telescope").register_extension {
       opts = opts or {}
 
       local indexed_items, widths = vim.F.if_nil(
-        vim.F.if_nil(specific_opts[opts.prompt], {}).make_displayer,
+        vim.F.if_nil(specific_opts[opts.prompt], {}).make_indexed,
         function(items_)
           local indexed_items = {}
           for idx, item in ipairs(items_) do
