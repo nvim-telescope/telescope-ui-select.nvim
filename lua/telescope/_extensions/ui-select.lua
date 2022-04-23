@@ -13,7 +13,7 @@ return require("telescope").register_extension {
     local entry_display = require "telescope.pickers.entry_display"
 
     local specific_opts = {
-      ["Code actions:"] = {
+      ["codeaction"] = {
         make_indexed = function(items)
           local indexed_items = {}
           local widths = {
@@ -65,30 +65,30 @@ return require("telescope").register_extension {
 
     vim.ui.select = function(items, opts, on_choice)
       opts = opts or {}
+      local prompt = vim.F.if_nil(opts.prompt, "Select one of")
+      if prompt:sub(-1, -1) == ":" then
+        prompt = prompt:sub(1, -2)
+      end
+      local sopts = vim.F.if_nil(specific_opts[vim.F.if_nil(opts.kind, "")], {})
 
-      local indexed_items, widths = vim.F.if_nil(
-        vim.F.if_nil(specific_opts[opts.prompt], {}).make_indexed,
-        function(items_)
-          local indexed_items = {}
-          for idx, item in ipairs(items_) do
-            table.insert(indexed_items, { idx = idx, text = item })
-          end
-          return indexed_items
+      local indexed_items, widths = vim.F.if_nil(sopts.make_indexed, function(items_)
+        local indexed_items = {}
+        for idx, item in ipairs(items_) do
+          table.insert(indexed_items, { idx = idx, text = item })
         end
-      )(items)
-      local displayer = vim.F.if_nil(vim.F.if_nil(specific_opts[opts.prompt], {}).make_displayer, function() end)(
-        widths
-      )
-      local make_display = vim.F.if_nil(vim.F.if_nil(specific_opts[opts.prompt], {}).make_display, function(_)
+        return indexed_items
+      end)(items)
+      local displayer = vim.F.if_nil(sopts.make_displayer, function() end)(widths)
+      local make_display = vim.F.if_nil(sopts.make_display, function(_)
         return function(e)
           return opts.format_item(e.value.text)
         end
       end)(displayer)
-      local make_ordinal = vim.F.if_nil(vim.F.if_nil(specific_opts[opts.prompt], {}).make_ordinal, function(e)
+      local make_ordinal = vim.F.if_nil(sopts.make_ordinal, function(e)
         return opts.format_item(e.text)
       end)
       pickers.new(topts, {
-        prompt_title = vim.F.if_nil(opts.prompt, "Select one of"),
+        prompt_title = prompt,
         finder = finders.new_table {
           results = indexed_items,
           entry_maker = function(e)
