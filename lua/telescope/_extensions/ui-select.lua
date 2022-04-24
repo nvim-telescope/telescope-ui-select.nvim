@@ -6,6 +6,7 @@ return require("telescope").register_extension {
     if #topts == 1 and topts[1] ~= nil then
       topts = topts[1]
     end
+    topts.specific_opts = specific_opts
 
     local pickers = require "telescope.pickers"
     local finders = require "telescope.finders"
@@ -76,7 +77,8 @@ return require("telescope").register_extension {
         return tostring(e)
       end)
 
-      local sopts = vim.F.if_nil(specific_opts[vim.F.if_nil(opts.kind, "")], {})
+      -- We want or here because specific_opts[x] can be either nil or even false and then its should be an empty tbl
+      local sopts = specific_opts[vim.F.if_nil(opts.kind, "")] or {}
       local indexed_items, widths = vim.F.if_nil(sopts.make_indexed, function(items_)
         local indexed_items = {}
         for idx, item in ipairs(items_) do
@@ -87,7 +89,8 @@ return require("telescope").register_extension {
       local displayer = vim.F.if_nil(sopts.make_displayer, function() end)(widths)
       local make_display = vim.F.if_nil(sopts.make_display, function(_)
         return function(e)
-          return opts.format_item(e.value.text)
+          local x, _ = opts.format_item(e.value.text)
+          return x
         end
       end)(displayer)
       local make_ordinal = vim.F.if_nil(sopts.make_ordinal, function(e)
