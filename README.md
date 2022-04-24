@@ -6,7 +6,7 @@ stuff can fill the telescope picker. Example would be
 
 ![screenshot](https://user-images.githubusercontent.com/66286082/154263222-ccecd75a-9b4b-410f-9843-1f300638aecf.png)
 
-requires latest nvim 0.6 (nightly)
+requires latest nvim 0.7 or newer nightly version
 
 ## Installation
 
@@ -29,6 +29,20 @@ require("telescope").setup {
       require("telescope.themes").get_dropdown {
         -- even more opts
       }
+
+      -- pseudo code / specification for writing custom displays, like the one
+      -- for "codeactions"
+      -- specific_opts = {
+      --   [kind] = {
+      --     make_indexed = function(items) -> indexed_items, width,
+      --     make_displayer = function(widths) -> displayer
+      --     make_display = function(displayer) -> function(e)
+      --     make_ordinal = function(e) -> string
+      --   },
+      --   -- for example to disable the custom builtin "codeactions" display
+      --      do the following
+      --   codeactions = false,
+      -- }
     }
   }
 }
