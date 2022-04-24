@@ -6,7 +6,6 @@ return require("telescope").register_extension {
     if #topts == 1 and topts[1] ~= nil then
       topts = topts[1]
     end
-    topts.specific_opts = specific_opts
 
     local pickers = require "telescope.pickers"
     local finders = require "telescope.finders"
@@ -16,56 +15,59 @@ return require("telescope").register_extension {
     local strings = require "plenary.strings"
     local entry_display = require "telescope.pickers.entry_display"
 
-    specific_opts = vim.tbl_extend("keep", specific_opts, {
-      ["codeaction"] = {
-        make_indexed = function(items)
-          local indexed_items = {}
-          local widths = {
-            idx = 0,
-            command_title = 0,
-            client_name = 0,
-          }
-          for idx, item in ipairs(items) do
-            local client = vim.lsp.get_client_by_id(item[1])
-            local entry = {
-              idx = idx,
-              ["add"] = {
-                command_title = item[2].title:gsub("\r\n", "\\r\\n"):gsub("\n", "\\n"),
-                client_name = client and client.name or "",
+    __TelescopeUISelectSpecificOpts = vim.F.if_nil(
+      __TelescopeUISelectSpecificOpts,
+      vim.tbl_extend("keep", specific_opts, {
+        ["codeaction"] = {
+          make_indexed = function(items)
+            local indexed_items = {}
+            local widths = {
+              idx = 0,
+              command_title = 0,
+              client_name = 0,
+            }
+            for idx, item in ipairs(items) do
+              local client = vim.lsp.get_client_by_id(item[1])
+              local entry = {
+                idx = idx,
+                ["add"] = {
+                  command_title = item[2].title:gsub("\r\n", "\\r\\n"):gsub("\n", "\\n"),
+                  client_name = client and client.name or "",
+                },
+                text = item,
+              }
+              table.insert(indexed_items, entry)
+              widths.idx = math.max(widths.idx, strings.strdisplaywidth(entry.idx))
+              widths.command_title = math.max(widths.command_title, strings.strdisplaywidth(entry.add.command_title))
+              widths.client_name = math.max(widths.client_name, strings.strdisplaywidth(entry.add.client_name))
+            end
+            return indexed_items, widths
+          end,
+          make_displayer = function(widths)
+            return entry_display.create {
+              separator = " ",
+              items = {
+                { width = widths.idx + 1 }, -- +1 for ":" suffix
+                { width = widths.command_title },
+                { width = widths.client_name },
               },
-              text = item,
             }
-            table.insert(indexed_items, entry)
-            widths.idx = math.max(widths.idx, strings.strdisplaywidth(entry.idx))
-            widths.command_title = math.max(widths.command_title, strings.strdisplaywidth(entry.add.command_title))
-            widths.client_name = math.max(widths.client_name, strings.strdisplaywidth(entry.add.client_name))
-          end
-          return indexed_items, widths
-        end,
-        make_displayer = function(widths)
-          return entry_display.create {
-            separator = " ",
-            items = {
-              { width = widths.idx + 1 }, -- +1 for ":" suffix
-              { width = widths.command_title },
-              { width = widths.client_name },
-            },
-          }
-        end,
-        make_display = function(displayer)
-          return function(e)
-            return displayer {
-              { e.value.idx .. ":", "TelescopePromptPrefix" },
-              { e.value.add.command_title },
-              { e.value.add.client_name, "TelescopeResultsComment" },
-            }
-          end
-        end,
-        make_ordinal = function(e)
-          return e.idx .. e.add["command_title"]
-        end,
-      },
-    })
+          end,
+          make_display = function(displayer)
+            return function(e)
+              return displayer {
+                { e.value.idx .. ":", "TelescopePromptPrefix" },
+                { e.value.add.command_title },
+                { e.value.add.client_name, "TelescopeResultsComment" },
+              }
+            end
+          end,
+          make_ordinal = function(e)
+            return e.idx .. e.add["command_title"]
+          end,
+        },
+      })
+    )
 
     vim.ui.select = function(items, opts, on_choice)
       opts = opts or {}
@@ -77,8 +79,8 @@ return require("telescope").register_extension {
         return tostring(e)
       end)
 
-      -- We want or here because specific_opts[x] can be either nil or even false and then its should be an empty tbl
-      local sopts = specific_opts[vim.F.if_nil(opts.kind, "")] or {}
+      -- We want or here because __TelescopeUISelectSpecificOpts[x] can be either nil or even false -> {}
+      local sopts = __TelescopeUISelectSpecificOpts[vim.F.if_nil(opts.kind, "")] or {}
       local indexed_items, widths = vim.F.if_nil(sopts.make_indexed, function(items_)
         local indexed_items = {}
         for idx, item in ipairs(items_) do
