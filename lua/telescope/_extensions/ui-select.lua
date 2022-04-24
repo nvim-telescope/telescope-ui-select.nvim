@@ -1,5 +1,8 @@
 return require("telescope").register_extension {
   setup = function(topts)
+    local specific_opts = vim.F.if_nil(topts.specific_opts, {})
+    topts.specific_opts = nil
+
     if #topts == 1 and topts[1] ~= nil then
       topts = topts[1]
     end
@@ -12,7 +15,7 @@ return require("telescope").register_extension {
     local strings = require "plenary.strings"
     local entry_display = require "telescope.pickers.entry_display"
 
-    local specific_opts = {
+    specific_opts = vim.tbl_extend("keep", specific_opts, {
       ["codeaction"] = {
         make_indexed = function(items)
           local indexed_items = {}
@@ -61,7 +64,7 @@ return require("telescope").register_extension {
           return e.idx .. e.add["command_title"]
         end,
       },
-    }
+    })
 
     vim.ui.select = function(items, opts, on_choice)
       opts = opts or {}
@@ -70,7 +73,7 @@ return require("telescope").register_extension {
         prompt = prompt:sub(1, -2)
       end
       opts.format_item = vim.F.if_nil(opts.format_item, function(e)
-        return e
+        return tostring(e)
       end)
 
       local sopts = vim.F.if_nil(specific_opts[vim.F.if_nil(opts.kind, "")], {})
