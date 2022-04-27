@@ -98,7 +98,7 @@ return require("telescope").register_extension {
       local make_ordinal = vim.F.if_nil(sopts.make_ordinal, function(e)
         return opts.format_item(e.text)
       end)
-      pickers.new(topts, {
+      pickers.new(_G.topts or topts, {
         prompt_title = prompt,
         finder = finders.new_table {
           results = indexed_items,
@@ -120,6 +120,13 @@ return require("telescope").register_extension {
         end,
         sorter = conf.generic_sorter(topts),
       }):find()
+
+      -- remove _G.topts
+      if _G.topts then
+        vim.schedule(function()
+          _G.topts = nil
+        end)
+      end
     end
   end,
 }
