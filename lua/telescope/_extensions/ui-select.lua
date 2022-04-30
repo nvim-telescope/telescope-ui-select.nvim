@@ -14,6 +14,7 @@ return require("telescope").register_extension {
     local action_state = require "telescope.actions.state"
     local strings = require "plenary.strings"
     local entry_display = require "telescope.pickers.entry_display"
+    local utils = require "telescope.utils"
 
     __TelescopeUISelectSpecificOpts = vim.F.if_nil(
       __TelescopeUISelectSpecificOpts,
@@ -112,9 +113,13 @@ return require("telescope").register_extension {
         },
         attach_mappings = function(prompt_bufnr)
           actions.select_default:replace(function()
-            local selection = action_state.get_selected_entry().value
+            local selection = action_state.get_selected_entry()
+            if selection == nil then
+              utils.__warn_no_selection "ui-select"
+              return
+            end
             actions.close(prompt_bufnr)
-            on_choice(selection.text, selection.idx)
+            on_choice(selection.value.text, selection.value.idx)
           end)
           return true
         end,
