@@ -100,7 +100,7 @@ return require("telescope").register_extension {
         return opts.format_item(e.text)
       end)
       pickers.new(topts, {
-        prompt_title = prompt,
+        prompt_title = string.gsub(prompt, "\n", " "),
         finder = finders.new_table {
           results = indexed_items,
           entry_maker = function(e)
