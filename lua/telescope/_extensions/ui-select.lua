@@ -80,6 +80,11 @@ return require("telescope").register_extension {
         return tostring(e)
       end)
 
+      -- schedule_wrap because closing the windows is deferred
+      -- See https://github.com/nvim-telescope/telescope.nvim/pull/2336
+      -- And we only want to dispatch the callback when we're back in the original win
+      on_choice = vim.schedule_wrap(on_choice)
+
       -- We want or here because __TelescopeUISelectSpecificOpts[x] can be either nil or even false -> {}
       local sopts = __TelescopeUISelectSpecificOpts[vim.F.if_nil(opts.kind, "")] or {}
       local indexed_items, widths = vim.F.if_nil(sopts.make_indexed, function(items_)
