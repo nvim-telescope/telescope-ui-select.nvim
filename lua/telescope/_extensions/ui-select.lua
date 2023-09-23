@@ -2,6 +2,7 @@ return require("telescope").register_extension {
   setup = function(topts)
     local specific_opts = vim.F.if_nil(topts.specific_opts, {})
     topts.specific_opts = nil
+    __TelescopeUISelectKindOpts = vim.F.if_nil(topts.kind, {})
 
     if #topts == 1 and topts[1] ~= nil then
       topts = topts[1]
@@ -99,7 +100,11 @@ return require("telescope").register_extension {
       local make_ordinal = vim.F.if_nil(sopts.make_ordinal, function(e)
         return opts.format_item(e.text)
       end)
-      pickers.new(_G.topts or topts, {
+
+      -- Get theme opts by kind
+      local kind_topts = __TelescopeUISelectKindOpts[vim.F.if_nil(opts.kind, "")]
+
+      pickers.new(kind_topts or topts, {
         prompt_title = prompt,
         finder = finders.new_table {
           results = indexed_items,
@@ -125,13 +130,6 @@ return require("telescope").register_extension {
         end,
         sorter = conf.generic_sorter(topts),
       }):find()
-
-      -- remove _G.topts
-      if _G.topts then
-        vim.schedule(function()
-          _G.topts = nil
-        end)
-      end
     end
   end,
 }
