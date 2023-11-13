@@ -29,7 +29,7 @@ return require("telescope").register_extension {
             }
             for idx, item in ipairs(items) do
               local client_id, title
-              if vim.version and vim.version.cmp(vim.version(), vim.version.parse "0.10-dev") >= 0 then
+              if vim.version and vim.version.cmp(vim.version(), vim.version.parse "0.10.1-dev") >= 0 then
                 client_id = item.ctx.client_id
                 title = item.action.title
               else
