@@ -114,32 +114,34 @@ return require("telescope").register_extension {
       local make_ordinal = vim.F.if_nil(sopts.make_ordinal, function(e)
         return opts.format_item(e.text)
       end)
-      pickers.new(topts, {
-        prompt_title = string.gsub(prompt, "\n", " "),
-        finder = finders.new_table {
-          results = indexed_items,
-          entry_maker = function(e)
-            return {
-              value = e,
-              display = make_display,
-              ordinal = make_ordinal(e),
-            }
+      pickers
+        .new(topts, {
+          prompt_title = string.gsub(prompt, "\n", " "),
+          finder = finders.new_table {
+            results = indexed_items,
+            entry_maker = function(e)
+              return {
+                value = e,
+                display = make_display,
+                ordinal = make_ordinal(e),
+              }
+            end,
+          },
+          attach_mappings = function(prompt_bufnr)
+            actions.select_default:replace(function()
+              local selection = action_state.get_selected_entry()
+              if selection == nil then
+                utils.__warn_no_selection "ui-select"
+                return
+              end
+              actions.close(prompt_bufnr)
+              on_choice(selection.value.text, selection.value.idx)
+            end)
+            return true
           end,
-        },
-        attach_mappings = function(prompt_bufnr)
-          actions.select_default:replace(function()
-            local selection = action_state.get_selected_entry()
-            if selection == nil then
-              utils.__warn_no_selection "ui-select"
-              return
-            end
-            actions.close(prompt_bufnr)
-            on_choice(selection.value.text, selection.value.idx)
-          end)
-          return true
-        end,
-        sorter = conf.generic_sorter(topts),
-      }):find()
+          sorter = conf.generic_sorter(topts),
+        })
+        :find()
     end
   end,
 }
