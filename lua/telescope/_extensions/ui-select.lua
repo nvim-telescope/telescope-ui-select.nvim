@@ -29,12 +29,20 @@ return require("telescope").register_extension {
             }
             for idx, item in ipairs(items) do
               local client_id, title
-              if vim.version and vim.version.cmp(vim.version(), vim.version.parse "0.10-dev") >= 0 then
+
+              if item[1] ~= nil and item[2] ~= nil and item[2].title ~= nil then
+                client_id = item[1]
+                title = item[2].title
+              elseif
+                item.ctx ~= nil
+                and item.ctx.client_id ~= nil
+                and item.action ~= nil
+                and item.action.title ~= nil
+              then
                 client_id = item.ctx.client_id
                 title = item.action.title
               else
-                client_id = item[1]
-                title = item[2].title
+                vim.api.nvim_err_writeln "telescope-ui-select.nvim - Failed to get item information"
               end
 
               local client = vim.lsp.get_client_by_id(client_id)
