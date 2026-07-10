@@ -97,6 +97,7 @@ return require("telescope").register_extension {
 
       -- We want or here because __TelescopeUISelectSpecificOpts[x] can be either nil or even false -> {}
       local sopts = __TelescopeUISelectSpecificOpts[vim.F.if_nil(opts.kind, "")] or {}
+      local popts = sopts.opts or topts -- We can override the default picker options on `opts.kind`.
       local indexed_items, widths = vim.F.if_nil(sopts.make_indexed, function(items_)
         local indexed_items = {}
         for idx, item in ipairs(items_) do
@@ -115,7 +116,7 @@ return require("telescope").register_extension {
         return opts.format_item(e.text)
       end)
       pickers
-        .new(topts, {
+        .new(popts, {
           prompt_title = string.gsub(prompt, "\n", " "),
           finder = finders.new_table {
             results = indexed_items,
